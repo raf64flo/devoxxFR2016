@@ -64,7 +64,7 @@ git diff --stat 	# affiche fichier par fichier la quantité de modif
 git diff --dirstat	# affiche en pourcentage les modifications effectuées - par défaut n'affiche que les fichiers comptant pour au moins 3% des modifications - configurable en spécifiant : --dirstat=5 pour monter à 5%
 ----
 
-Ah... et pour tous les fichiers générés qu'il ne faudrait pas versionner, utiliser le site http://gitignore.io/[gitignore.io] pour générer des fichier `.gitignore` aux petits oignons selon les technologies utilisées, idéal pour le 1er commit ! Quelqu'un se sent de MàJ nos `.gitignore` dans les projets chez nous ? :-)
+Ah... et pour tous les fichiers générés qu'il ne faudrait pas versionner, utiliser le site http://gitignore.io/[gitignore.io] pour générer des fichier `.gitignore` aux petits oignons selon les technologies utilisées, idéal pour le 1er commit !
 
 Ah oui, un rappel qui ne fait pas de mal. À quoi correspondent les différents zones logiques de git ? Voici une http://ndpsoftware.com/git-cheatsheet.html[cheat sheet très visuelle], indispensable à connaître !
 
@@ -149,7 +149,7 @@ Spring Boot 1.3 a introduit des DevTools (utilisable en tant que dépendance opt
 
 Avec la dépendance à Actuator, il est possible d'exposer automatiquement plein de métriques relatives à l'état de l'application, son environnement, etc., https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/a40cbe53ec4ac3ca88658b4f6e0f52cc4d1856eb[exemple].
 De même qu'on a la possibilité https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/a40cbe53ec4ac3ca88658b4f6e0f52cc4d1856eb#diff-9309ebd91edc15847a7140e2d17c68deR84[d'exposer le hash du commit de la version compilée] (via une dépendance additionnelle non gérée par Spring).
-Ou bien afficher des https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/a40cbe53ec4ac3ca88658b4f6e0f52cc4d1856eb#diff-392573172d4a7000214e6936d591fed9R36[métriques personnalisées]. On peut même envisager de le customiser pour interroger d'autres services et vérifier leur état (ce pourrait être intéressant pour les noeuds du réseau transPLANT et afficher dans le portail WheatIS la liste des noeuds acutellement disponibles).
+Ou bien afficher des https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/a40cbe53ec4ac3ca88658b4f6e0f52cc4d1856eb#diff-392573172d4a7000214e6936d591fed9R36[métriques personnalisées]. On peut même envisager de le customiser pour interroger d'autres services et vérifier leur état.
 Si besoin, ces métriques sont https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/a40cbe53ec4ac3ca88658b4f6e0f52cc4d1856eb#diff-392573172d4a7000214e6936d591fed9R30[exportables] (en JMX mais pas que) avec @Bean @ExportMetricWriter/
 
 Spring Boot vient avec la gestion d'un https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/a04d79b2f3680aeee0f5f8dd9420e04c64f61790#diff-9309ebd91edc15847a7140e2d17c68deR31[cache applicatif] (utilisant par défaut des hash maps), mais on peut facilement spécifier un cache dédiée plus évolué (EHCache ou autre), il suffit de spsécifier la dépendance dans le `pom.xml`, mais l'intérêt c'est qu'on passe par la couche d'abstraction de Spring qui se charge de déléguer les instructions à chaque implémentation via l'API cache-api de `javax.cache`
