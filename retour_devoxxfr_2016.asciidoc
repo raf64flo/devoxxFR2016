@@ -1,0 +1,542 @@
+= Retour DevoxxFR 2016
+Raphaël Flores <raphael.flores@versailles.inra.fr>
+:toc:
+:doctype: article
+ifndef::ebook-format[:leveloffset: 1]
+
+Bonjour à tous,
+
+J'étais la semaine [line-through]#dernière# d'avant à la conférence DevoxxFR 2016 sur Paris. Le http://devoxx.fr/agenda/2016[programme] était très chargé et les choix parfois difficiles (il y a juste un créneau ou 2 auxquels je n'ai pas trouvé de talk très intéressant, a priori).
+
+Je vous propose de vous partager ce que j'ai vu et entendu, en reprenant ci-dessous chacun des talks que j'ai suivi dans l'ordre chronologique.
+
+== Git ProTips (HoL)
+* Talk : http://cfp.devoxx.fr/2016/talk/AWB-3163/Git_ProTips_%28HoL%29
+* Slides : http://tdd.github.io/devoxx-git-protips/
+* Documentation de référence commande par commande : https://git-scm.com/docs
+* Blog dédié à Git, maintenu an partie par l'orateur : http://www.git-attitude.fr/archives/
+
+Ce talk était très intéressant et l'orateur très vif et bien en verve, du genre :
+[quote, Christophe Porteneuve]
+____
+Moi, j’aime bien le `rm -fr`, le `rm` français.
+____
+Il est revenu sur ce qu'est censé être un bon commit : un commit doit être atomique, homogène, compréhensible, peu défectueux. En somme il doit correspondre à un, et un seul sujet, le message doit être clair et s'exprimer en quelques mots.
+
+Dans la même logique, si un message de commit contient des `+` ou `&` ou plusieurs lignes, c'est probablement que le sujet n'est pas assez bien défini et qu'il faudrait le couper en plusieurs commits (et ça se fait !)
+
+Un crédo à retenir : committez (`commit`) souvent, poussez (`push`) avec parcimonie ! Un commit, tant qu'il est en local uniquement, peut se réécrire, même de manière très chirurgicale, mais une fois qu'il est poussé... juste ne réécrivez pas l'historique, c'est pas cool, mais vraiment vraiment pas cool pour les autres commiteurs du projet.
+
+Il est revenu sur l'attitude à avoir avant tout commit. Avant tout commit, il est indispensable de lancer un `git status`. Il faut bien regarder le retour du `git status` avant tout commit. Un `git status` fournit plein d'informations super utiles. `git status` est ton ami, il te dit même les commandes les plus probables à lancer. `git status` pourrait t'insulter, mais non, `git status` est cool, il te parle bien et te suggère la suite à donner à tes actions selon chaque contexte.
+Bref. Quelle commande faut-il faire avant un commit ?
+
+Comme il est bon de savoir ce que l'on est sur le point de commiter, il est toujours indispensable de lancer un https://git-scm.com/docs/git-diff[`git diff`]. Et les sorties de `git diff` étant un brutes de fonderie, voici comment les rendre un peu plus lisibles... installez `npm` sur votre bécanne, puis configurez votre diff comme suit (attention à désactiver toute personnalisation de diff que vous auriez faite avant, sinon ça risque de ne pas faire joli du tout) :
+
+[source,shell]
+----
+npm install -g diff-so-fancy
+git config --global color.diff always
+git config --global color.diff.meta yellow bold
+git config --global color.diff.frag magenta bold
+git config --global color.diff.whitespace red reverse
+git config --global pager.diff "diff-so-fancy | less --tabs=2 -RFX"
+git config --global pager.show "diff-so-fancy | less --tabs=2 -RFX"
+----
+
+D'autres options utiles (la documentation de référence décrit plus précisément toutes les https://git-scm.com/docs/git-config[options de configuration]) :
+
+[source,shell]
+----
+git config --global status.showUntrackedFiles all 	# permet d'afficher un à un les fichiers non gérés par git, en allant plus loin que le répertoire, il affiche TOUS les fichiers.
+
+git config --global diff.mnemonixPrefix true	# lors d'un diff permet de préfixer les fichiers différents selon leur localisation git (commit/index/workspace) au lieu de a/b (pas très parlant)
+
+git diff --word-diff	# make diff displaying inline modifs
+
+git config --global diff.wordRegex .	# allows to target diff at each character
+
+git diff -w 	# ignore all whitespaces in diff (no option available for that)
+
+git show :0:toto 	# :0 targets the "toto" staged file
+
+git diff --stat 	# affiche fichier par fichier la quantité de modif
+
+git diff --dirstat	# affiche en pourcentage les modifications effectuées - par défaut n'affiche que les fichiers comptant pour au moins 3% des modifications - configurable en spécifiant : --dirstat=5 pour monter à 5%
+----
+
+Ah... et pour tous les fichiers générés qu'il ne faudrait pas versionner, utiliser le site http://gitignore.io/[gitignore.io] pour générer des fichier `.gitignore` aux petits oignons selon les technologies utilisées, idéal pour le 1er commit ! Quelqu'un se sent de MàJ nos `.gitignore` dans les projets chez nous ? :-)
+
+Ah oui, un rappel qui ne fait pas de mal. À quoi correspondent les différents zones logiques de git ? Voici une http://ndpsoftware.com/git-cheatsheet.html[cheat sheet très visuelle], indispensable à connaître !
+
+Souvent, on est dans le cas où un même fichier contient plusieurs modifications qui devraient aterrir dans 2 commits distincts. C'est pas grave, on peut sélectionner facilement quelle partie du fichier on souhaite intégrer au prochain commit en laissant les autres modifications dans le workspace :
+
+[source,shell]
+----
+git add -p file 	# permet de splitter les modifications en sélectionnant les morceaux modifiés pour les envoyer dans des commits distincts.
+----
+
+Donc, une fois qu'on a ajouté tout ce qu'on souhaite, on est prêt à https://git-scm.com/docs/git-commit[commiter]. Si on a oublié un fichier ou qu'on a fait une typo dans le dernier message de commit, pas grave, on peut jouer avec l'option `--amend` de `git commit`.
+
+Pour s'aider dans la lecture de l'historique git (log) il propose de formatter un peu mieux la sortie :
+[source,shell]
+----
+LOG_FORMAT='%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%an %ad)%Creset'
+git config --global alias.lg "log --graph --date=relative --pretty=tformat:'$LOG_FORMAT'"
+git config --global log.abbrevCommit true
+git config --global log.follow true
+----
+
+Le https://git-scm.com/docs/git-log[log] remonte le temps à partir d’un ou plusieurs points, le plus récent d’abord (chronologie inverse). Notez qu'on peut apparaître facilement comme un `Master of Git` en réécrivant correctement nos commits, mais en local, car toutes (vraiment toutes) les manipulations de versionnement sont visibles dans le `reflog`. Une fois poussés par contre les commits sont visibles de manière atomique par le serveur :
+
+[source,shell]
+----
+git reflog	# affiche l'ensemble des états commités (amendés ou pas) en local uniquement, cet état affiche toutes les opérations effectuées sur le poste local
+----
+
+Pour diverses raisons, il peut être utile de retrouver l'origine d'une modification survenue dans le code. La commande `git blame` peut venir à l'esprit rapidement, mais elle est très imparfaite car elle n'affiche que la dernière modification et elle ne permet pas de visualiser les suppressions. Préférer utiliser :
+[source,shell]
+----
+git log -S
+git log --diff-filter=<pattern>
+----
+
+Et encore plus précis, on peut même suivre les modifications d'un bloc de code existant et remonter dans tous les commits qui l'ont modifié. Il suffit de préciser les lignes actuelles dans le fichier :
+[source,shell]
+----
+git log -L 'method_name:file_path' 	# trace l'historique d'un bloc de code, d'une méthode (bloc entouré par des accollades) du fichier
+git log -L '3,10:file_path' 	# utilise les numéros de lignes actuels et remonte l'hitorique ayant modifié tout ce qui existe actuellement entre ces numéros de lignes.
+----
+
+Viens ensuite la question du https://git-scm.com/docs/git-rebase[`git rebase`]. La fâcheuse fonction qui fait peur !
+[quote, Moi]
+____
+Fear the Rebase Day!
+____
+
+N'empêche, le rebase permet de réordonner, redécouper et réappliquer les commits de manière chirurgicale. C'est une commande puissante qu'il est conseillé de lancer en mode intéractif (`git rebase -i`). Je vous renvoie http://tdd.github.io/devoxx-git-protips/?utm_source=porteneuve&utm_medium=slides&utm_campaign=devoxxfr-2016#/interactive-rebase-intro[aux slides] directement.
+
+Ensuite, l'orateur est revenu sur http://tdd.github.io/devoxx-git-protips/#/push-pull-traps[les pièges de `pull` & `push`]. Un `fetch` récupère dans le dépôt local tous les objets & références du dépôt distant, bien. En revanche, le `pull` va un peu plus loin et en plus de récupérer les objets localement, il lance une fusion de ces objets avec les branches locales ! Ce qui peut poser des soucis selon la configuration du client git...
+
+Voilà voilà, je vous laisse aller lire la fin des slides vu qu'on n'a pas eu l'occasion de tout tester. Mais si vous êtes arrivés jusque là, eh bien chapeau ! \o/
+
+
+== Spring Boot 1.3 pour le web
+* Talk : http://cfp.devoxx.fr/2016/talk/XFE-1586/Spring_Boot_1.3_pour_le_web
+* Slides : https://speakerdeck.com/snicoll/spring-boot-1-dot-3-pour-le-web
+* Projet Git avec les exemples, gérés avec des step-by-step commit : https://github.com/snicoll-demos/spring-boot-4tw-uni
+* Vidéo du talk équivalent réalisé à Devoxx Belgium : https://www.youtube.com/watch?v=7cemYpV1fNI
+
+Ce talk était un peu moins passionnant que le premier, les orateurs étaient devant un public plus large et à l'évidence moins à l'aise. Néanmoins le contenu était intéressant, voici les notes un peu brutes de décoffrage que j'ai retirée.
+
+Ils sont partis du besoin suivant : gérer les clés de propriétés d'une version à l'autre des releases de Spring Boot. Et ils ont montré code à l'appui comment répondre au problème avec Spring Boot.
+
+De manière générale, il est possible de construire des applications :
+
+* sous la forme d'un WAR (web archive) qui doit être exécuté dans un conteneur de servlet comme Tomcat ou Jetty
+* ou bien en tant que JAR exécutable (Java archive) qui embarque lui-même un conteneur de servlet et qui se lance en ligne de commande (ou via un service Unix...).
+
+La forme du JAR exécutable est privilégiée car toute la configuration du conteneur de servlet est gérée par Spring Boot et embarquée dans l'application (ou via un fichier de configuration externe), ce qui garantit qu'une même archive sera utilisée pour la `dev`, la `rc` ou la `prod`, et donc limiter les différences entre les environnements.
+
+Les bibliothèques Javascript sont souvent disponibles en tant qu'artéfact Maven (pour utilisation en tant que ressource statique embarquée) via les webjar, ex. : `org.webjar.jquery`.
+
+Par défaut une page d'erreur est fournie par Spring Boot, elle moche, mais elle est https://github.com/snicoll-demos/spring-boot-4tw-uni/blob/fadca2780fb8a5c5af243dcc3d03d51a2e5c1f6b/spring-boot-4tw-web/src/main/java/demo/config/Application.java#L19[personnalisable].
+
+La validation des formulaires est supportée avec la JSR 303 via des annotations, on peut même définir https://github.com/snicoll-demos/spring-boot-4tw-uni/blob/master/spring-boot-4tw-web/src/main/java/demo/config/validation/VersionValidator.java[nos propres validateurs].
+
+Pour le web, on peut annoter une exception spécifique avec https://github.com/snicoll-demos/spring-boot-4tw-uni/blob/fadca2780fb8a5c5af243dcc3d03d51a2e5c1f6b/spring-boot-4tw-web/src/main/java/demo/config/service/VersionMisMatchException.java#L6[un statut HTTP dédié]. Pour aller plus loin sur la gestion des Exception avec Spring : https://spring.io/blog/2013/11/01/exception-handling-in-spring-mvc
+
+Spring Boot 1.3 a introduit des DevTools (utilisable en tant que dépendance optionnelle) qui permet le rechargement à chaud, jusqu'à une actualisation de l'application dans le navigateur via un plugin qui fait le lien avec le code lorsqu'une sauvegarde est effectuée, grâce à Live Reload, https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/b3b1e522ce7da5e04b2a4c6dbc493c8f8cbd9476[exemple]. Pour aller plus loin avec les DevTools : https://spring.io/blog/2015/06/17/devtools-in-spring-boot-1-3
+
+Avec la dépendance à Actuator, il est possible d'exposer automatiquement plein de métriques relatives à l'état de l'application, son environnement, etc., https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/a40cbe53ec4ac3ca88658b4f6e0f52cc4d1856eb[exemple].
+De même qu'on a la possibilité https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/a40cbe53ec4ac3ca88658b4f6e0f52cc4d1856eb#diff-9309ebd91edc15847a7140e2d17c68deR84[d'exposer le hash du commit de la version compilée] (via une dépendance additionnelle non gérée par Spring).
+Ou bien afficher des https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/a40cbe53ec4ac3ca88658b4f6e0f52cc4d1856eb#diff-392573172d4a7000214e6936d591fed9R36[métriques personnalisées]. On peut même envisager de le customiser pour interroger d'autres services et vérifier leur état (ce pourrait être intéressant pour les noeuds du réseau transPLANT et afficher dans le portail WheatIS la liste des noeuds acutellement disponibles).
+Si besoin, ces métriques sont https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/a40cbe53ec4ac3ca88658b4f6e0f52cc4d1856eb#diff-392573172d4a7000214e6936d591fed9R30[exportables] (en JMX mais pas que) avec @Bean @ExportMetricWriter/
+
+Spring Boot vient avec la gestion d'un https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/a04d79b2f3680aeee0f5f8dd9420e04c64f61790#diff-9309ebd91edc15847a7140e2d17c68deR31[cache applicatif] (utilisant par défaut des hash maps), mais on peut facilement spécifier un cache dédiée plus évolué (EHCache ou autre), il suffit de spsécifier la dépendance dans le `pom.xml`, mais l'intérêt c'est qu'on passe par la couche d'abstraction de Spring qui se charge de déléguer les instructions à chaque implémentation via l'API cache-api de `javax.cache`
+
+Naturellement, https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/044e7faf01b076c415fdb2d250ba9d9b4f3fa3e4[l'intégration avec le PaaS maison est fournie], ici CloudFoundry. Plus d'infos sur CloudFoundry (open source) : https://www.cloudfoundry.org/
+
+Il est également possible de https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/a00a34fab2a3496c24e02269215687622727e50b[gérer des ressources statiques qui sont localisées en dehors de l'arborescence du projet] et de surcharger le comportement par défaut en utilisant un profil (ici profil `dev`). Un https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/7d2653abe071aa6ef8f79ba286a50c69f7be195d#diff-9309ebd91edc15847a7140e2d17c68deR113[autre exemple de gestion de profil, pour la production par exemple] avec le fichier de configuration adéquat.
+
+Il est simplissime d'activer la https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/056609af50a71f63cb3bfb01707404e7b6ea64bb#diff-3cf0f96cb5d68d3e26d80dd590daf6b6R4[compression côté serveur] pour certains types de fichiers.
+
+Pour des services web, plutôt que de retourner un contenu (JSON) complet, il est possible de restreindre certaines propriétés du JSON avec les https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/056609af50a71f63cb3bfb01707404e7b6ea64bb#diff-468cd002cb5d9b127aa346a6b0d265c0R39[JsonView de Jackson].
+
+La gestion des _Cross-origin resource sharing_ (CORS - spécification de sécurité du W3C qui fait qu'un navigateur n'ira pas chercher via du code Javascript des ressources localisées sur un autre domaine qui a servi la page web) est simplissime avec SpringBoot, https://github.com/snicoll-demos/spring-boot-4tw-uni/commit/86823beabb6a082dc7b4053cd109fd5db7158a5f#diff-f87526001fc9e0d9eb38a49a91e11fbaR12[en 1 ligne, c'est réglé !]
+Notez que la gestion peut se configurer à 3 endroits :
+
+* au niveau d'une méthode spécifique
+* au niveau d'un Controler complet
+* ou de manière globale à l'application
+
+Pour aller plus loin : https://spring.io/blog/2015/06/08/cors-support-in-spring-framework et https://spring.io/guides/gs/rest-service-cors/
+
+Enfin concernant le packaging... en tant que JAR exécutable, une application Spring Boot peut s'installer en tant que service Linux (au choix `init.d` ou `systemd`) très simplement, pour aller plus loin : https://docs.spring.io/spring-boot/docs/1.3.0.RELEASE/reference/htmlsingle/#deployment-service ##
+
+Pour aller encore plus loin, la doc de référence de Spring Boot 1.3.0 : https://docs.spring.io/spring-boot/docs/1.3.0.RELEASE/reference/htmlsingle/
+
+
+== Feign(ant) in Action
+* Talk : http://cfp.devoxx.fr/2016/talk/OOT-8042/Feign%28ant%29_in_Action
+* Slides : https://speakerdeck.com/ilaborie/feign-live
+* Démo-live@Github : https://github.com/ilaborie/feign-live
+* Feign@Github : https://github.com/Netflix/feign#feign-makes-writing-java-http-clients-easier
+
+Feign est un client HTTP très simple qui permet d'interroger des webservice Restful (ou pas) exposant des données textuelles.
+
+Les requêtes asynchrones ne sont pas natives à Feign, mais le JDK 8 avec les https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html[`CompletableFuture`] (http://blog.octo.com/java-8-est-reactif/[exemple]) permet d'introduire le concept.
+
+De manière générale, si la bibliothèque est très simple de base, elle est très extensible (via des modules) et supporte différentes implémentations pour l'encodage Json (https://github.com/Netflix/feign#gson[(Gson/Jackson)] et XML https://github.com/Netflix/feign#sax[(Sas/JAXB)], et permet même de spécifier un client HTTP plus performant (https://github.com/Netflix/feign#okhttp[OkHttp]), etc.
+A garder en tête si l'on est amené à implémenter des clients Java pour nos webservices, ou bien pour des webservices distants.
+
+
+== Apache Maven, Java 9 et le projet Jigsaw -
+* Talk : http://cfp.devoxx.fr/2016/talk/MKN-4721/Apache_Maven,_Java_9_et_le_projet_Jigsaw
+* Slides : https://speakerdeck.com/aheritier/fr-apache-maven-java-9-et-le-projet-jigsaw-at-devoxx-france-2016
+* Code : https://github.com/MavenDemo/maven-java9-jigsaw-fr
+
+Je vais faire court, les slides seront bien plus parlantes, mais en bref Jigsaw est une nouveauté à venir dans Java 9 qui consiste à modulariser le JDK et tout code Java.
+
+Pour des raisons de performance (des modules plus petits seront plus faciles à embarquer), de sécurité (si une faille est découverte dans un module elle aura moins d'impact sur les autres modules et limitera sa portée), et de taille (la plateforme Java pourra être utilisée sur des périphériques restreints en mémoire).
+
+Jigsaw tend à pouvoir gérer les relations entre modules, pour faire en sorte que le comportement soit cohérent à la compilation comme à l'exécution. Par contre, ça va rentrer en plein dans les opérations de Maven, du coup ils doivent préparer le terrain pour faire en sorte que tout ne soit pas cassé, surtout si ils souhaitent que Jigsaw soit adopté (aura-t-on le choix en même temps ?!)...
+
+
+== Containers, VMs, Processes… Isolation, performances, I/O… Comment ces technologies fonctionnent et comment les différencier?
+* Talk : http://cfp.devoxx.fr/2016/talk/EMT-1932/Containers,_VMs,_Processes%E2%80%A6_Isolation,_performances,_I%2FO%E2%80%A6_Comment_ces_technologies_fonctionnent_et_comment_les_differencier%3F
+
+C'était une démo live avec des slides dans un terminal (si si !), des GIF animés dans tous les sens, mais très instructif !
+
+Si je n'ai pas pris beaucoup de notes, c'est parce qu'il n'y avait pas beaucoup à noter, le CEO de https://www.clever-cloud.com/fr/[Clever Cloud] ayant démontré en direct comment une image Docker pouvait accéder aux autres ressources du système hôte. Il a bien mis en avant que Docker ne répond pas du tout aux problématique de sécurité et d'isolation des processus, contrairement aux idées reçues, au contraire de machines virtuelles disposant notamment d'instructions dédiées au niveau matériel (CPU).
+
+Bref, il a confirmé ce que nous avait déjà dit Mikaël il y a plus de 15 jours.
+
+
+== Retours sur Java 8
+* Talk http://cfp.devoxx.fr/2016/talk/XBY-0882/Retours_sur_Java_8
+
+JM Doudoux (oui, lui-même !) a fait un retour sur l'utilisation de certaines des nouveautés de Java 8 et a présenté quelques bonnes pratiques (rappel, des vraies bonnes pratiques sont empiriques, contextuelles et mouvantes !). Ce qui suit nécessite une connaissance de Java 8 :
+
+* Optional
+**	N'est pas sérialisable => à éviter en variable d'instance (d'autant que certains frameworks ne le prennent pas en compte)
+**	Eviter également dans les variables d'instance
+**	Eviter Optional<Object[]> ou Optional<Collection>
+* Parallel arrays
+**	/!\ aux méthodes synchrones cachées dans les classes internes au JDK, si l'on veut paralléliser, il faut utiliser des thread différents, et il faut utiliser JMH pour benchmarker !
+** Lambda
+**	utiliser des références de méthodes de préférence ? (System.out::println) plutôt que System.out:.println(...)
+**	les interfaces fonctionneles devraient lever des Runtime exception à spécifier dans un try/catch
+* Stream
+**	bien adapté pour les collections, moins pour les map
+**	utiliser les classes de Stream pour les primitives (LongStream, IntStream, etc.)
+**	Attention à toujours limiter les Stream (Stream.limit(10)), autrement on risque des boucles infinies.
+**	Certaines sources de données ont des mauvaises performances en cas de SplitIterator, notamment les LinkedList
+**	Il ne faut paralléliser que si c'est vraiment indispensable, si le volume de données est assez conséquent, car les mécanismes de parallélisation font des opérations supplémentaires sous le capot.
+
+Beaucoup d'autres améliorations en Java 8, à évaluer également...
+
+
+== 100% Stateless avec JWT (JSON Web Token)
+* Talk : http://cfp.devoxx.fr/2016/talk/JEE-4171/100%25_Stateless_avec_JWT_%28JSON_Web_Token%29
+* JWT Introduction : https://jwt.io/introduction/
+
+La description du talk met en appêtit...
+[quote, Hubert Sablonnière, DevoxxFR 2016]
+____
+Dans nos architectures REST modernes, les bons vieux cookies de session ne suffisent plus. Il est temps de s’intéresser aux JSON Web Token : une nouvelle approche plus simple, 100% stateless et facilement scalable. Plus de stockage de session côté serveur. Plus de réplication de session sur le cluster. La consommation de multiples couches d’APIs avec une seule connexion devient plus simple.
+____
+
+Eh bien, j'en suis convaincu !
+
+JWT permet d'introduire de la confiance entre le navigateur et le serveur. Historiquement, la confiance pouvait être implémentée via des identifiants de session, classique.
+
+Les identifiants de session étant conservés en mémoire, dans des cas (clustering) où des clés de sessions ne sont pas disponibles sur tous les services. Un cache partagé pourrait résoudre le soucis, mais cela introduirait un _Single Point of Failure_ (SPOF). Par contre, on pourrait utiliser un cache distribué (type Redis ?).
+
+JWT ne se compare pas à des cookies (moyen de transport), mais à des ID Sessions ! Il est généré et chiffré côté serveur.
+
+Architecture d'JWT : `H34D3R.P4YL04D.S19N4TUR3` (encodé en Base64Url)
+3 parties séparées par un point :
+
+* Header : contient des métadonnées sur le token, son type (JWT) et l'algorithme de hash utilisé
+* Payload : les revendications (claims) du jeton
+* Signature : permet de garantir le contenu et l'immuabilité du token
+
+Payload est un JSON encodé qui contient des claims (réservés/publiques/privés):
+
+* ISS: qui a émis le token
+* SUB: identifiant métier
+* AUD: audience (ie. token dédié au frontend?)
+* EXP: date d'expiration
+* JTI: identifiant unique de tout temps par le système qui a généré le token
+
+Il n'y a plus que du calcul à faire une fois que le JWT a été généré : il suffit juste que la signature soit partagée sur tous les serveurs. Plus besoin d'accès base ou de partage d'identifiants à gérer, puisque le _payload_ permetpeuvent l'utiliser sans besoin d'accès base ou cache !
+
+La signature peut se faire de manière symétrique, ou asymétrique (clés privée/publique) : la clé privée n'est utilisée que par le serveur d'authentification, mais tous les autres serveurs disposant de la clé publique peuvent déchiffrer les JWT transmis.
+
+Comparaison avec d'autres systèmes :
+
+* Oauth2 échange les identifiants par référence et doit donc stocker les valeurs quelque part.
+* OpenID-connect ? L'ID token de OpenId EST un JWT!
+
+Inconvénients :
+
+* quid de la révocation des jetons avant la date d'expiration ? Cela nécessite une base contenant les JTI (ID uniques !) à blacklister avant la date d'expiration. Mais ce n'est pas forcément nécessaire et dépend du contexte : se déloguer de la banque peut nécessiter de révoquer le JWT, mais si on est sur Facebook, ce n'est peut-être pas nécessaire.
+* la façon d'injecter le JWT est importante pour éviter les XSS. Il est recommandé de passer le JWT par un Cookie HTTPS et d'utiliser des Cookies HttpOnly (non accessible par du code Javascript) ! Plus d'infos : https://www.owasp.org/index.php/HttpOnly
+* attaques CSRF: n'a pas compris...
+
+Quels peuvent être d'autres usages ?
+
+* tout ce qu'on fait avec une session, on peut le faire avec un JWT (pour y ajouter des informations ou sauver l'état des actions d'un client)
+* email de confirmation : on peut utiliser et envoyer le JWT dans l'email pour valider que le client correspond bien. C'est _STATELESS_!
+
+Pour aller plus loin :
+
+* avec Spring/JWT : http://technicalrex.com/2015/02/20/stateless-authentication-with-spring-security-and-jwt
+* http://stormpath.com/blog
+* http://owasp.org
+* https://github.com/dwyl/learn-json-web-tokens
+* http://jwt.io
+
+
+== Faire découvrir la programmation aux enfants, un atelier à la fois
+* Talk : http://cfp.devoxx.fr/2016/talk/REU-5654/Faire_decouvrir_la_programmation_aux_enfants,_un_atelier_a_la_fois
+
+Il n'y a pas de slide, c'était principalement des démos d'outils et robots qui sont présentés aux enfants. Ca donne vraiment envie d'y accompagner les enfants, entre Scratch, Thymio, des cartes Arduino à personnaliser, il y en a pour tous les âges !
+
+Pour aller plus loin :
+
+* Devoxx4kids : http://www.devoxx4kids.org/france/
+* Pixees, plein de ressources intéressantes et éprouvées : https://pixees.fr/
+* Scratch : https://scratch.mit.edu/
+* Thymio : https://www.thymio.org/fr:thymio
+* Arduino : https://www.arduino.cc/
+
+
+== Elasticsearch et Hibernate sont sur un bateau...
+* Talk : http://cfp.devoxx.fr/2016/talk/QVW-3514/Elasticsearch_et_Hibernate_sont_sur_un_bateau
+
+Les slides ne sont pas (encore) disponibles (suivre le compte Twitter https://twitter.com/dadoonet[@dadoonet]), mais les deux orateurs ont montré comment Hibernate (en 5.6, pas encore sortie) permettait d'indexer automatiquement dans Elasticsearch les entités persistées en base.
+
+Et comment il permettait de récupérer des entités depuis Elasticsearch sans s'embêter avec des transformations manuelles.
+
+Une info intéressante a été lâchée lors de ce talk :
+[quote, entendu à DevoxxFR 2016...]
+____
+Elasticsearch 5.0 proposera un client REST officiel
+____
+Cela facilitera la maintenance et la compatiblité multi-versions (l'API REST étant moins mouvante que l'API interne).
+
+Pour aller plus loin :
+
+* Article de blog sur le sujet : http://in.relation.to/2016/02/29/HibernateSearchAlpha-Elasticsearch/
+* Doc officielle concernant l'intégration d'Elasticsearch dans Hibernate : https://docs.jboss.org/hibernate/search/5.6/reference/en-US/htmlwn ou Textile). Cette plateforme est open-source et simple à utiliser. De nombreux projets open-source (petits ou grands) l’ont adopté pour réduire les difficultés rencontrées lors de la rédaction ou la maintenance de leur documentation.
+
+
+== Comment Asciidoctor peut vous aider pour votre doc
+* Talk : http://cfp.devoxx.fr/2016/talk/HCH-2449/Comment%20Asciidoctor%20peut%20vous%20aider%20pour%20votre%20doc
+
+Asciidoctor permet d'importer des lignes de code directement depuis le code, putôt que copier/coller le code depuis le source. Via l'instruction include qui va chercher le tag correspondant commenté dans le code source. Cela permet une synchronisation entre le source et la doc (si le source est modifiée la doc le sera automatiquement).
+On peut aussi inclure des fichiers asciidoc dans d'autres fichiers.
+
+Asciidoc peut être édité avec n'importe quel éditeur de texte (eh oui !).
+
+Il existe des _plugin_ pour https://addons.mozilla.org/fr/firefox/addon/asciidoctorjs-live-preview/[Firefox] et https://chrome.google.com/webstore/detail/asciidoctorjs-live-previe/iaalpfgpbocpdfblpnhhgllgbdbchmia[Chrome] permettant de rendre un fichier AsciiDoc directement tel qu'il serait après compilation.
+
+La compilation Maven peut se faire nativement (dépendance asciidoc gen est-elle nécessaire ?)
+
+Gitlab propose-t-il une intégration des asciidoc ? Apparemment, oui : https://github.com/gitlabhq/gitlabhq/pull/7569
+
+Pour aller plus loin :
+
+* http://asciidoctor.org/news/2016/04/05/
+
+
+== The Eclipse IDE: The Force Awakens
+* Talk : http://cfp.devoxx.fr/2016/talk/CEK-5422/The_Eclipse_IDE:_The_Force_Awakens
+
+Tour d'horizon des nouveautés déjà présentes (version Mars, 2015) et à venir (version Neon, 2016) dans l'EDI Eclipse.
+
+En termes de release, ils restent à 1 sortie majeure par an (juin), mais passent de 2 à 3 livraisons intermédiaires (septembre, *décembre*, mars).
+
+=== Neon (juin 2016)
+* Packaging Eclipse
+** Installeur Eclipse (OOMPH) qui récupère la déclinaison d'Eclipse choisie par l'utilisateur, avec options disponbiles pour 8 des préférences les plus souvent modifiées par les utilisateurs
+** Mise à jour des plugins à granularité plus fine (on pourra MàJ des modules spécifiques sans avoir à attendre la MàJ de tout le package)
+** OSX : vraie application disponible
+** Synchronisation des préférences Eclipse possible via un compte Eclipse à créer, serveur cible configurable
+* Hiérarchie Maven multi-module respectée dans la vue Navigator (option à specifier dans les paramètres de la vue)
+* Moteur de theming désactivable pour limiter l'impact sur les performances
+* Mode anti distraction présent
+* GTK3 bien mieux géré dans Neon
+* Mode word wrap dans l'éditeur de texte (à côté de l'option d'affichage des caractères invisibles) : permet sans modifier le source d'afficher une ligne du source sur plusieurs lignes
+* Outil d'mport de projets amélioré, bien plus intuitif, reconnaît mieux les langages
+* Tooling Git (support de GitFlow) depuis Mars
+* Gestion des Hook (pre-commit/pre-push)
+* Blocage des commit en cas d'erreur de compilation
+* Gestion des .gitattributes
+* Git FLS supporté !!
+
+=== Java Tooling
+* Support Maven enfin correct
+* Java 8 quick assist (convert to/from lambda/anonymous class), un peu comme le fait déjà IntelliJ Idea
+* Amélioration de la détection des NullPointerException
+* Complétion de code enfin en mode Match.Anywhere avec highlighting
+
+=== Web tooling NEON
+* éditeur JSON
+* Support ed EcmaScrit 6
+* Chromium V8 Debugger intégré dans Eclipse
+
+=== Container tooling
+* Docker explorer image
+* Vagrant explorer
+
+=== Oxygen (juin 2017)
+* améliorations de l'indexation interne JDT (concerne la complétion, le type hierarchy, etc.) icom/orevial/devoxx-microservices
+
+== Microservices IRL: ça fonctionne chez un client, on vous dit comment!
+* Talk : http://cfp.devoxx.fr/2016/talk/TSH-1394/Microservices%20IRL:%20%C3%A7a%20fonctionne%20chez%20un%20client,%20on%20vous%20dit%20comment!
+
+Ce talk présentait un retour d'expérience sur la mise en place d'une architecture µ-services pour les fonctionnalités de recherche d'un site de e-commerce.
+
+Ils ont suivi une approche itérative en améliorant petit à petit leur système en termes de couplage lâche et d'outils utilisés.
+
+Bon, j'ai pas pu suivre la présentation jusqu'au bout du coup j'ai raté le plus gros, mais les slides et le code permettront de se saisir du message !
+
+En tout cas leur gestion globale des microservices passe par un projet git unique et des modules Maven embarquant chacun une application Spring Boot. Ca tombe bien c'est l'approche qu'on a suivie pour notre interface unifiée (à l'exception du fait qu'il ne semble pas utiliser un pom parent spécifique), mais il y a certainement des astuces à prendre de leur code.
+
+
+== Hibernate tu connais... mais en fait tu connais pas
+* Talk : http://cfp.devoxx.fr/2016/talk/MLX-6500/Hibernate_tu_connais..._mais_en_fait_tu_connais_pas
+
+Petit tour d'horizon de quelques nouveautés introduites avec la version à venir d'Hibernate (5.6), complète le talk avec Elasticsearch ci-dessus.
+
+En vrac, quelques annotations utiles sont proposées :
+
+* `@Lazy` permet de ne pas charger directement une proporiété d'un POJO
+* `@LazyGroup("groupName")` permet d'activer/désactiver le chargement Lazy pour un ensemble de propriétés d'un coup.
+* `@GeneratedValue(strategy=UUID)` permet de générer des identifiants sous la forme d'UUID
+
+Concernant les annotations permettant d'ineragir avec Elasticsearch :
+
+* `@Indexed` <class>
+* `@Field` <native property>
+* `@IndexedEmbedded` <object property>
+
+Enfin...
+
+* Hibernate fournit un DSL requête assez clair, notamment pour la construction des facettes.
+* Hibernate OGM permet d'intégrer 4 SGBD NoSQL via JPA (MongoDB, Neo4j, EHcache, Infinispan), d'autres sont en développement.
+* Hibernate Validator => JSR 303
+* Support Java 8 : peut s'appliquer sur les éléments d'une collection ! Les validations peuvent se déclarer programmatiquement (sans passer par des Annotations statiques).
+* Support des recherches spatiales spécifiques des SGBD relationnels (Postgis pour PostgreSQL).
+
+D'autre part, la documentation a été grandement réécrite et améliorée, un gros travail a été effectué à ce niveau.
+
+Comme déjà vu, Hibernate 5.6 final (à venir) supportera Elasticsearch : http://in.relation.to/2016/03/17/ThirdAlphaElasticsearch/
+
+Pour aller plus loin :
+
+* http://in.relation.to/blog.atom
+* http://hibernate.org/ogm/
+
+
+== Jigsaw est là pour nous sauver
+* Talk : http://cfp.devoxx.fr/2016/talk/VBK-3044/Jigsaw_est_la_pour_nous_sauver
+
+Présentation des nouveautés introduites par le projet Jigsaw à venir avec Java 9.
+
+Rappel des problèmes actuels de la plateforme Java :
+
+* ClassPath : scan linéaire provoquant des https://dzone.com/articles/what-is-jar-hell[JAR hell].
+* Sécurité : pas de forte encapsulation, dés qu'une faille permet de passer outre la 1ere sécurité, l'accès est total, il n'y a pas de seconde barrière.
+* Aucune garantie que ce qui fonctionne à la commpilation sera également fiable au runtime
+
+Pour être adopté, Jigsaw doit êre compatible avec :
+
+* Maven/Gradle (à la compilation)
+* JavaEE/JBoss modules/OSGI (à l'exécution)
+
+C'est le syndrome du sandwich
+
+JDEPS est un nouvel outil qui permet depuis un JAR de générer le graphe des dépendances de package (textuellement et graphiquement)
+
+Solution proposée : modulariser les sources en modules ( 1 module = 1+ package)
+
+Un module est déclaré via une classe module-info.java qui contient :
+[source,java]
+----
+module : fr.umlv.dragon.rt
+{
+	requires java.base; //optionnel
+	exports fr.umlv.dragon.rt;
+}
+----
+
+Pour faciliter la migration, pour les jar non modularisés, un module peut être créé automatiquement par la plateforme lors de la compilation.
+
+Le projet va ouvrir de nouvelles cibles pour la plateforme Java avec l'internet des objets vu la taille réduite des modules de la JVM.
+
+Pour aller plus loin :
+
+* http://openjdk.java.net/projects/jigsaw/quick-start
+
+
+== L'odyssée du Continuous Delivery
+* Talk : http://cfp.devoxx.fr/2016/talk/VWX-3520/L'odyssee_du_Continuous_Delivery
+
+Retour d'expérience sur le passage d'une application monolithique à un SI davantage axé sur les microservices dans l'optique d'une livraison continue, impliquant 3 équipe (2 à Paris, 1 en Inde).
+
+WARNING: Leur stack d'origine : JSF, Rich Page, Oracle
+
+D'après eux (et ça fait sens) :
+[quote, eux]
+____
+la dette technique est un frein à la livraison continue !
+____
+
+Ils ont choisi une approche de livraison en mode "release train" avec cohabitation de 2 modèles de livraison :
+
+* _legacy_ :12 semaines de _time to market_
+* nouveau : 3 semaines de TTM
+
+Pour les livraisons, selon les fonctionnalités, si seules les nouvelles applis sont impactées, alors la livraison se fait à 3 semaines. Si elles touchent les applications legacy, alors ça attendra la release train legacy.
+
+Problème induit : certaines fonctionnalités sur le legacy n'étaient pas prête à la date de freeze : ça bloquait les passages.
+
+Solution : msie en place d'un _feature toggle_ pour pousser le code en prod mais en desactivant le code.
+
+Comment faire ? Commenter le code concerné (crade mais ça passe dans un 1er temps), ensuite, extraction des _toggle features_ dans des fichiers de propriétés (deployIt, solution Xebia).
+
+Par contre, ils ont oublié de prendre en compte les spécificités d'environnement (du à l'extension des équipes : plus assez d'environnement de build pour tout le monde).
+Solution, avec des environnements pour :
+
+* intégration : chaque push entraine un déploiement
+* homologation : chaque jour, les commit de la veille sont déployés
+* UAT : 1 deploy / sprint avec les testeurs
+* pré-prod
+* production
+
+Recrutement "2.0" :
+[quote, eux]
+____
+Il faut se concentrer sur la culture de dév plus que sur la technique : critères de qualité de code, TDD, etc.
+
+Passer un Dojo de recrutement permet d'évaluer véritablement ces aspects.
+____
+
+Pour aller plus loin :
+
+* Description du FeatureToggle pattern : http://martinfowler.com/bliki/FeatureToggle.html
+* Outil facilitant la mise en place des Feature Toggles : http://www.togglz.org/documentation/overview.html
+
+
+== Conclusion
+
+Cette conférence était encore de très bonne facture ! Même lors des créneaux où je n'ai pas suivi de talk, les discussions avec les exposants étaient riches et intéressantes. A recommander !
+
+N'hésitez pas à suivre le https://www.youtube.com/channel/UCsVPQfo5RZErDL41LoWvk0A[compte Youtube de DevoxxFR] où seront publiées les vidéos de retransmission des talk, d'ici 1 à 2 mois.
+
+
+// http://fr.slideshare.net/mdomenjoud/ratez-vos-revue-de-code-en-5-lecons-devoxx-fr-2016
+
